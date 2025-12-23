@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: atp-worker
+spec:
+  replicas: 5  # Scale horizontally
+  selector:
+    matchLabels:
+      app: atp-worker
+  template:
+    metadata:
+      labels:
+        app: atp-worker
+    spec:
+      containers:
+      - name: worker
+        image: yourusername/async-task-processor:latest  # Push to Docker Hub/ECR
+        command: ["python", "-m", "app.worker"]
+        env:
+        - name: REDIS_HOST
+          value: "redis"
