@@ -1,35 +1,37 @@
-version: '3.9'
+version: "3.9"
 
 services:
-  redis:
-    image: redis:7-alpine
+  rabbitmq:
+    image: rabbitmq:3-management
     ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    command: redis-server --appendonly yes
+      - "5672:5672"
+      - "15672:15672"
 
-  worker:
-    build: .
-    command: python -m app.worker.run_worker
-    depends_on:
-      - redis
+  postgres:
+    image: postgres:15
     environment:
-      - REDIS_HOST=redis
+      POSTGRES_DB: tasks_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
     volumes:
-      - .:/app
-    deploy:
-      replicas: 3  # Simulate scaling
+      - ./common/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
 
-  api:  # Optional HTTP producer
-    build: .
-    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
+  api:
+    build: ./api/app
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     depends_on:
-      - redis
-    environment:
-      - REDIS_HOST=redis
+      - rabbitmq
+      - postgres
 
-volumes:
-  redis-data:
+  worker:
+    build: ./worker/app
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+      - postgres

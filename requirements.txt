@@ -1,4 +1,0 @@
-redis==5.0.8
-urllib3<2  # Compatibility for redis lib
-fastapi==0.115.0  # Optional for HTTP API
-uvicorn==0.30.6   # For API

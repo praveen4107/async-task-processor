@@ -1,75 +1,42 @@
-# async-task-processor
+# Async Task Processor
 
-A **production-ready distributed task queue** built in Python. Demonstrates key system design concepts: scalability, fault tolerance, retries, dead-letter queues, and horizontal scaling.
-
-Inspired by Celery/RQ/BullMQ, but simpler
+Async Task Processor is a distributed background job processing system built using FastAPI, RabbitMQ, and PostgreSQL. It enables asynchronous execution of long-running tasks such as email sending and data processing using a producer-consumer architecture.
 
 ## Features
-
--   Async task enqueuing (with optional delays)
--   Exponential backoff retries
--   Dead-letter queue for permanent failures
--   Idempotent tasks (unique IDs)
--   Horizontal worker scaling
--   Redis-backed persistence
--   Optional FastAPI HTTP endpoint
--   Dockerized + Kubernetes-ready
-
-## Tech Stack
-
--   Python 3.12
--   Redis
--   FastAPI + Uvicorn
--   Docker & Docker Compose
--   Kubernetes
+- Asynchronous task execution
+- Reliable message delivery using RabbitMQ
+- Scalable worker processes
+- Retry mechanism for failed tasks
+- Dead-letter queue handling
+- Task status tracking in PostgreSQL
+- Dockerized setup for easy deployment
 
 ## Architecture
-
 ```
-[Client / API] → Enqueue → Redis (Broker)
-                             ↓
-                 [Multiple Workers] ← Poll & Execute
-                             ↓
-           Success → Done    Failure → Retry → DLQ
+Client -> FastAPI (Producer) -> RabbitMQ Queue -> Worker Services -> PostgreSQL
 ```
 
-## Quick Start (Docker Compose)
+## Tech Stack
+- Language: Python
+- API Framework: FastAPI
+- Message Broker: RabbitMQ
+- Database: PostgreSQL
+- Containerization: Docker, Docker Compose
 
+## Setup Instructions
+1. Install Docker and Docker Compose
+2. Clone the repository
+3. Run `docker compose up --build`
+4. Access API at http://localhost:8000
+5. RabbitMQ dashboard at http://localhost:15672
+
+## Example API
+POST /tasks
 ```
-git clone https://github.com/yourusername/async-task-processor.git
-cd async-task-processor
-docker compose up --build
+{
+  "task_type": "send_email",
+  "payload": {
+    "to": "user@example.com"
+  }
+}
 ```
-
-### Enqueue via Python
-
-```
-from app.producer import enqueue
-enqueue("send_email", {"to": "user@example.com", "subject": "Hello"})
-```
-
-### Enqueue via API
-
-```
-curl -X POST http://localhost:8000/enqueue\
-  -H "Content-Type: application/json"\
-  -d '{"task": "process_image", "args": {"url": "https://example.com/img.jpg"}}'
-```
-
-## Production Deployment (Kubernetes)
-
-```
-docker build -t yourusername/async-task-processor:latest .
-docker build -f api/Dockerfile -t yourusername/async-task-processor-api:latest .
-docker push yourusername/async-task-processor:latest
-docker push yourusername/async-task-processor-api:latest
-
-kubectl apply -f k8s/
-```
-
-Scale workers:
-
-```
-kubectl scale deployment/atp-worker --replicas=20
-```
-
